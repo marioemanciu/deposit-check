@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
+<title>Deposit Check Prototype</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one phone-width app column, centred on wide screens, full width on phones. Single light theme by choice to match the Figma prototype. */
+:root{
+  --ink:#16202a; --muted:#5b6670; --line:#d3d9de; --paper:#ffffff; --ground:#eef2f4;
+  --accent:#0f6787; --accent-ink:#ffffff; --accent-soft:#e3f0f5;
+  --warn-bg:#fff4d6; --warn:#6e4b00; --ok-bg:#e3f4ea; --ok:#1d6436; --danger:#b3261e;
+  --font:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  color-scheme:light;
+}
+html,body{height:100%}
+body{background:var(--ground);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.45;
+  padding-left:max(0px,env(safe-area-inset-left,0px));padding-right:max(0px,env(safe-area-inset-right,0px))}
+*{box-sizing:border-box}
+.proto{background:var(--ink);color:#fff;font-size:12px;text-align:center;padding:6px max(16px,env(safe-area-inset-left,0px))}
+.app{max-width:430px;margin:0 auto;min-height:calc(100% - 28px);background:var(--paper);display:flex;flex-direction:column;box-shadow:0 0 0 1px var(--line)}
+.bar{background:var(--accent);color:var(--accent-ink);display:grid;grid-template-columns:44px 1fr 44px;align-items:center;min-height:56px;padding:0 8px}
+.bar h1{margin:0;font-size:17px;font-weight:600;text-align:center}
+.iconbtn{background:none;border:0;color:inherit;width:44px;height:44px;border-radius:10px;cursor:pointer;font-size:22px;line-height:1}
+.iconbtn:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #f2b705;outline-offset:2px}
+.progress{padding:12px 20px 0}
+.progress .meta{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted);font-weight:500}
+.track{height:6px;border-radius:99px;background:var(--accent-soft);margin-top:6px;overflow:hidden}
+.fill{height:100%;background:var(--accent);border-radius:99px;transition:width .3s}
+.body{flex:1;padding:20px;display:flex;flex-direction:column;gap:14px}
+.foot{padding:16px 20px calc(20px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:10px}
+h2{font-size:21px;line-height:1.25;margin:0;text-wrap:balance}
+.sub{color:var(--muted);font-size:13.5px;margin:-6px 0 0}
+.btn{display:block;width:100%;border:0;border-radius:12px;padding:15px;font:600 16px var(--font);cursor:pointer;text-align:center}
+.btn.primary{background:var(--accent);color:var(--accent-ink)}
+.btn.primary small{display:block;font-weight:400;font-size:12.5px;opacity:.85;margin-top:2px}
+.btn.secondary{background:var(--paper);color:var(--accent);box-shadow:inset 0 0 0 1.5px var(--accent)}
+.btn.danger{background:var(--paper);color:var(--danger);box-shadow:inset 0 0 0 1.5px var(--danger)}
+.link{background:none;border:0;color:var(--accent);font:500 14.5px var(--font);text-decoration:underline;cursor:pointer;padding:6px 0;text-align:center}
+.opt{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:14px;cursor:pointer;font:inherit;color:inherit}
+.opt .dot{width:20px;height:20px;border-radius:50%;border:2px solid var(--line);flex:none;display:grid;place-items:center}
+.opt[aria-pressed="true"]{border:2px solid var(--accent);padding:13px}
+.opt[aria-pressed="true"] .dot{border-color:var(--accent)}
+.opt[aria-pressed="true"] .dot::after{content:"";width:10px;height:10px;border-radius:50%;background:var(--accent)}
+.opt b{display:block;font-weight:600}
+.opt span{color:var(--muted);font-size:13px}
+label.f{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--muted)}
+input,select{font:16px var(--font);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:12px 13px;background:var(--paper);width:100%}
+.euro{position:relative}.euro input{padding-left:30px}.euro::before{content:"€";position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:16px}
+.note{border-radius:12px;padding:12px 14px;font-size:13.5px;display:flex;gap:10px}
+.note .ic{flex:none;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;color:#fff}
+.note.warn{background:var(--warn-bg);color:var(--warn)}.note.warn .ic{background:var(--warn)}
+.note.ok{background:var(--ok-bg);color:var(--ok)}.note.ok .ic{background:var(--ok)}
+.note.info{background:var(--accent-soft);color:var(--accent)}.note.info .ic{background:var(--accent)}
+.note b{display:block}
+.err{color:var(--danger);font-size:13px;margin:0}
+.yn{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.yn button{border:1.5px solid var(--line);background:var(--paper);border-radius:12px;padding:18px;font:600 17px var(--font);cursor:pointer;color:var(--ink)}
+.yn button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.q{font-size:22px;font-weight:600;line-height:1.3;margin:6px 0 4px;text-wrap:balance}
+.card{border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.row{display:flex;justify-content:space-between;gap:12px;padding:13px 15px;border-top:1px solid var(--line);font-variant-numeric:tabular-nums}
+.row:first-child{border-top:0}.row b{font-weight:600;text-align:right}
+.status{border:2px solid var(--accent);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:8px}
+.chip{align-self:flex-start;font-size:12px;font-weight:600;border-radius:99px;padding:4px 10px;background:var(--warn-bg);color:var(--warn)}
+.chip.ok{background:var(--ok-bg);color:var(--ok)}
+.big{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums}
+.small{font-size:13px;color:var(--muted)}
+.signs{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+.listing{border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.listing .ph{height:120px;background:repeating-linear-gradient(135deg,#dde5ea 0 14px,#e8eef1 14px 28px);display:grid;place-items:center;color:var(--muted);font-size:12.5px}
+.listing .in{padding:12px 14px;display:flex;flex-direction:column;gap:4px}
+.wa{background:#e7f7e6;border-radius:14px 14px 14px 4px;padding:11px 13px;font-size:14px;max-width:92%}
+.wa .who{font-weight:600;font-size:12.5px;color:#1d6436;display:block;margin-bottom:2px}
+.task{background:var(--accent-soft);border-radius:12px;padding:12px 14px;color:var(--accent);font-weight:500}
+.pill{display:inline-block;font-size:11.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){.fill{transition:none}}
+</style>
+</head>
+<body>
+
+<div class="proto">CSC1058 student prototype · modelled on a bank transfer flow · no real money or data</div>
+<main class="app" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+const SCAM = {name:"John Murphy", iban:"IE29 AIBK 9311 5212 3456 78", rent:450, deposit:900};
+// Illustrative typical room rents for the prototype only (not real figures). Used to flag rent far below the area.
+const AREAS = {"Glasnevin, Dublin 9":800,"Drumcondra, Dublin 9":820,"Ballymun, Dublin 11":700,"Other area":750};
+const QS = [
+  {id:"q1", text:"Have you viewed the property in person and tried the keys?", risky:"No",
+   warn:"Fake landlords often avoid viewings. Garda advice is to view it and check the keys open the locks before paying."},
+  {id:"q2", text:"Have you confirmed the landlord's ID and that they own or manage the property?", risky:"No",
+   warn:"Ask for photo ID and check the RTB register where it applies."},
+  {id:"q3", text:"Have you received a written tenancy agreement?", risky:"No",
+   warn:"Being asked to pay before any lease is a common scam sign."},
+  {id:"q4", text:"Are you being pressured to pay right now?", risky:"Yes",
+   warn:"Pressure to pay quickly is a common scam sign. A genuine landlord can wait until you've seen it."}
+];
+const STEPS = ["Purpose","Payee","Rental details","Question 1 of 4","Question 2 of 4","Question 3 of 4","Question 4 of 4","Send"];
+const KEY = "depositProtoState";
+let S = fresh();
+function fresh(){return {mode:null,stack:[],purpose:null,name:"",iban:"",rent:"",deposit:"",area:"",answers:{},know:null,
+  amount:"",ref:"",reason:"",held:null,paused:null,rel:{},balance:2140.55,sent:null,err:""}}
+function load(){try{const v=JSON.parse(localStorage.getItem(KEY)||"null");if(v&&v.mode)S=Object.assign(fresh(),v)}catch(e){}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+const app = document.getElementById("app");
+const eur = n => "€"+Number(n||0).toLocaleString("en-IE",{minimumFractionDigits:Number(n)%1?2:0,maximumFractionDigits:2});
+const esc = s => String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const cur = () => S.stack[S.stack.length-1] || "start";
+
+function go(id,{replace=false,reset=false}={}){S.err="";if(reset)S.stack=[];if(replace)S.stack.pop();S.stack.push(id);save();render();window.scrollTo(0,0)}
+function back(){S.err="";if(S.stack.length>1)S.stack.pop();save();render()}
+
+/* ---------- pieces ---------- */
+const note=(kind,title,text)=>`<div class="note ${kind}"><span class="ic" aria-hidden="true">${kind==="ok"?"✓":kind==="info"?"i":"!"}</span><div>${title?`<b>${title}</b>`:""}${text}</div></div>`;
+function frame({title, back:showBack=true, step=null, body, foot="", saveLink=false}){
+  const prog = step!==null ? `<div class="progress" aria-label="Progress"><div class="meta"><span>Step ${step+1} of ${STEPS.length}</span><span>${STEPS[step]}</span></div><div class="track"><div class="fill" style="width:${((step+1)/STEPS.length)*100}%"></div></div></div>` : "";
+  const sl = saveLink ? `<button class="link" data-a="saveLater">Save and finish later</button>` : "";
+  return `<div class="bar">${showBack?`<button class="iconbtn" data-a="back" aria-label="Back">←</button>`:`<span></span>`}<h1>${title}</h1><span></span></div>${prog}
+  <div class="body">${body}${S.err?`<p class="err" role="alert">${S.err}</p>`:""}</div><div class="foot">${foot}${sl}</div>`;
+}
+const opt=(val,group,label,sub,sel)=>`<button class="opt" data-a="pick" data-g="${group}" data-v="${val}" aria-pressed="${sel===val}"><span class="dot"></span><span><b>${label}</b>${sub?`<span>${sub}</span>`:""}</span></button>`;
+const yn=(key,val)=>`<div class="yn">${["Yes","No"].map(v=>`<button data-a="yn" data-k="${key}" data-v="${v}" aria-pressed="${val===v}">${v}</button>`).join("")}</div>`;
+function vop(){
+  // Scenario: the scam account is held under a different name, so any name typed for a private accommodation deposit fails the check.
+  // The real account holder's name is never shown.
+  if(cur()!=="r_payee") return "";
+  const n=S.name.trim(); if(!n||S.iban.replace(/\s/g,"").length<15) return "";
+  if(S.purpose==="purchase"){const reg=/\b(limited|ltd|dac|plc)\.?$/i.test(n)?n:n+" Limited";
+    return note("ok","Name matches",`Matches the registered name on this account: ${esc(reg)}.`);}
+  if(S.purpose!=="deposit") return note("ok","Name matches",`"${esc(n)}" matches the name on this account.`);
+  return note("warn","Name doesn't match",`The name "${esc(n)}" doesn't match the name on the account for this IBAN. Check the details with the person before you continue.`);
+}
+function rentalSigns(){
+  const r=+S.rent, d=+S.deposit, out=[];
+  if(r>0&&d>r) out.push(["More than one month's rent","Deposits are usually capped at one month's rent (RTB). Ask why it's more."]);
+  const typ=AREAS[S.area]; if(r>0&&typ&&r<typ*0.65) out.push(["Rent is much lower than similar rooms nearby","Prices that seem too good can be a sign of a scam. Compare with the RTB Rent Index."]);
+  return out;
+}
+function allSigns(){
+  const s=rentalSigns().map(x=>x[0]);
+  QS.forEach(q=>{if(S.answers[q.id]===q.risky) s.push({q1:"You haven't viewed it or tried the keys",q2:"The landlord's ID isn't confirmed",q3:"No written tenancy agreement",q4:"You're being pressured to pay now"}[q.id])});
+  if(S.purpose==="friend"&&S.know==="No") s.unshift("You don't personally know this person");
+  return s;
+}
+const amt=()=> S.purpose==="deposit"||S.rentalFromOther||S.know==="No" ? (+S.deposit||0) : (+S.amount||0);
+
+/* ---------- screens ---------- */
+const V = {
+start(){return `<div class="bar"><span></span><h1>Facilitator</h1><span></span></div><div class="body">
+  <span class="pill">User test setup</span><h2>Choose which version this participant tries</h2>
+  <p class="sub">Alternate the order between participants. Each run starts from the scenario screen.</p>
+  <button class="btn primary" data-a="mode" data-v="redesign">Redesigned flow<small>Purpose, rental check, one question per screen, send when viewed</small></button>
+  <button class="btn secondary" data-a="mode" data-v="baseline">Current flow (baseline)</button>
+  ${note("info","Before each participant","Tap reset so saved progress from the last person is cleared.")}
+  <button class="link" data-a="reset">Reset saved progress</button></div>`},
+scenario(){return frame({title:"Your situation",back:false,body:`
+  <p class="sub" style="margin:0">You're a student looking for a room for this semester. You found this listing.</p>
+  <div class="listing"><div class="ph">Listing photo</div><div class="in"><b>Bright double room, Glasnevin</b><span class="big" style="font-size:20px">€450 / month</span>
+  <span class="small">Bills included · 10 min walk to DCU · available now</span><span class="small">Posted by John Murphy</span></div></div>
+  <div class="wa"><span class="who">John Murphy · WhatsApp</span>Hi! I'm working abroad so I can't show you the room, but I'll post the keys once you pay. Lots of people want it, so I need the €900 deposit today to hold it. IBAN: ${SCAM.iban}</div>
+  <div class="task">Your task: use the banking app to pay the deposit as you normally would. Think aloud as you go.</div>`,
+  foot:`<button class="btn primary" data-a="go" data-v="home">Open the banking app</button>`})},
+home(){
+  const held=S.held?`<div class="status"><span class="chip">Set up, not sent yet</span><span class="big">${eur(S.held.amount)} to ${esc(S.held.name)}</span>
+    <span class="small">Private accommodation deposit</span><span class="small" style="color:var(--ok)">The money hasn't left your account</span>
+    <span class="small">Cancels automatically in 7 days if you don't release it</span>
+    <button class="btn primary" data-a="go" data-v="r_release">I've viewed it, release payment</button>
+    <button class="link" data-a="go" data-v="r_cancel" style="color:var(--danger)">Cancel payment</button>
+    <button class="link" data-a="go" data-v="r_auto" style="font-size:12.5px">Demo: skip ahead 7 days</button></div>`:"";
+  const paused=S.paused?`<div class="status"><span class="chip">Deposit check paused</span><b>${eur(S.deposit)||"Deposit"} to ${esc(S.name||"new payee")}</b>
+    <span class="small">You stopped at ${STEPS[S.paused.step]}. Nothing has been sent.</span>
+    <button class="btn primary" data-a="resume">Continue where you left off</button></div>`:"";
+  return frame({title:"Home",back:false,body:`<h2>Good morning, Aoife</h2>${held}${paused}
+    <div class="card"><div class="row"><span>Current account</span><b>${eur(S.balance)}</b></div><div class="row"><span>Savings</span><b>${eur(650)}</b></div></div>`,
+    foot:`<button class="btn primary" data-a="go" data-v="pay">Pay or transfer</button><button class="link" data-a="end">End test</button>`});
+},
+pay(){return frame({title:"Pay",body:`<h2>Who are you paying?</h2>
+  ${opt("ciara","payee","Ciara O'Brien","Saved payee",null)}${opt("elec","payee","Electric Ireland","Saved payee",null)}
+  <button class="opt" data-a="newPayee"><span class="dot" style="border-style:dashed"></span><span><b>Add a new payee</b><span>Pay someone for the first time</span></span></button>`})},
+n_amount(){return frame({title:"Pay "+esc(S.name),body:`<h2>How much?</h2>
+  <label class="f">Amount<span class="euro"><input id="amount" inputmode="decimal" data-b="amount" value="${esc(S.amount)}" placeholder="25"></span></label>
+  <label class="f">Reference<input id="ref" data-b="ref" value="${esc(S.ref)}" placeholder="${S.payee==="elec"?"Account number":"Pizza Friday"}"></label>
+  ${note("info","","This payee is saved, so there are no extra steps.")}`,foot:`<button class="btn primary" data-a="payNormal">Pay</button>`})},
+
+/* ---- redesign ---- */
+r_purpose(){return frame({title:"Add payee",step:0,body:`<h2>What is this payment for?</h2><p class="sub">You're paying someone new, so we ask this once.</p>
+  ${opt("deposit","purpose","Private accommodation deposit","Rent or deposit to a landlord or agent",S.purpose)}
+  ${opt("friend","purpose","Friend or family","",S.purpose)}${opt("purchase","purpose","Purchase","Goods or services",S.purpose)}${opt("other","purpose","Other","",S.purpose)}`,
+  foot:`<button class="btn primary" data-a="purposeNext">Continue</button>`})},
+r_payee(){return frame({title:"Add payee",step:1,body:`<h2>${S.purpose==="deposit"?"Landlord's details":S.purpose==="purchase"?"Business details":"Payee details"}</h2>
+  <label class="f">${S.purpose==="purchase"?"Business name":"Name on the account"}<input id="name" data-b="name" value="${esc(S.name)}" autocomplete="off" placeholder="${S.purpose==="purchase"?"Dunnes Stores":"Full name"}"></label>
+  <label class="f">IBAN<input id="iban" data-b="iban" value="${esc(S.iban)}" autocomplete="off" placeholder="IE00 BANK 0000 0000 0000 00"></label>
+  <div id="live">${vop()}</div>`,foot:`<button class="btn primary" data-a="payeeNext">Continue</button>`})},
+r_rental(){return frame({title:"Rental details",step:2,saveLink:true,body:`<h2>About the rental</h2><p class="sub">This helps spot common rental scam signs.</p>
+  <label class="f">Monthly rent<span class="euro"><input id="rent" inputmode="decimal" data-b="rent" value="${esc(S.rent)}" placeholder="0"></span></label>
+  <label class="f">Deposit you're asked to pay<span class="euro"><input id="deposit" inputmode="decimal" data-b="deposit" value="${esc(S.deposit)}" placeholder="0"></span></label>
+  <label class="f">Area<select id="area" data-b="area"><option value="">Choose an area</option>${Object.keys(AREAS).map(a=>`<option ${S.area===a?"selected":""}>${a}</option>`).join("")}</select></label>
+  <div id="live">${rentalLive()}</div>`,foot:`<button class="btn primary" data-a="rentalNext">Continue</button>`})},
+r_know(){return frame({title:"Add payee",step:2,body:`<h2>Do you personally know this person?</h2><p class="sub">Scammers sometimes ask people to choose "Friend or family".</p>
+  ${opt("Yes","know","Yes, I know them","",S.know)}${opt("No","know","No, I've only met them online","",S.know)}`,foot:`<button class="btn primary" data-a="knowNext">Continue</button>`})},
+r_amount(){return frame({title:"Payment",step:2,body:`<h2>How much?</h2>
+  <label class="f">Amount<span class="euro"><input id="amount" inputmode="decimal" data-b="amount" value="${esc(S.amount)}"></span></label>
+  <label class="f">Reference<input id="ref" data-b="ref" value="${esc(S.ref)}" placeholder="What it's for"></label>`,foot:`<button class="btn primary" data-a="amountNext">Continue</button>`})},
+r_isrental(){return frame({title:"Payment",body:`<h2>Is this for somewhere to live?</h2><p class="sub">Your reference mentions renting. Rental deposits get an extra check.</p>
+  ${opt("yes","isrental","Yes, it's a rental deposit","Go to the rental check",S.isrental)}${opt("no","isrental","No, continue as normal","",S.isrental)}`,foot:`<button class="btn primary" data-a="isrentalNext">Continue</button>`})},
+r_q(i){const q=QS[i],a=S.answers[q.id];return frame({title:"Safety check",step:3+i,saveLink:true,body:`
+  <span class="pill">Based on Garda advice for renters</span><p class="q">${q.text}</p>${yn(q.id,a)}
+  <div id="live">${a===q.risky?note("warn","",q.warn):a?note("ok","","Thanks. That's what we'd expect from a genuine landlord."):""}</div>`,
+  foot:`<button class="btn primary" data-a="qNext" data-i="${i}">${i===3?"See summary":"Next question"}</button>`})},
+r_send(){const s=allSigns(),a=amt();return frame({title:"Send deposit",step:7,body:`<h2>How do you want to send ${eur(a)}?</h2>
+  ${s.length?note("warn",`We noticed ${s.length} warning sign${s.length>1?"s":""}`,`<ul class="signs">${s.map(x=>`<li>${x}</li>`).join("")}</ul>`):note("ok","No warning signs found","You can still wait until you've viewed it.")}
+  <div class="card"><div class="row"><span>To</span><b>${esc(S.name)}</b></div><div class="row"><span>Amount</span><b>${eur(a)}</b></div><div class="row"><span>Purpose</span><b>Accommodation deposit</b></div></div>
+  ${a>1000?note("info","","New payees are limited to €1,000 a day for the first 48 hours."):""}
+  <p class="small">A genuine landlord can wait until you've seen the place. If they won't, treat that as a warning sign.</p>`,
+  foot:`<button class="btn primary" data-a="hold">Send when I've viewed it<small>Set it up now. The money stays in your account.</small></button><button class="btn secondary" data-a="go" data-v="r_now">Send now</button>`})},
+r_now(){const s=allSigns();return frame({title:"Are you sure?",body:`<h2>Send ${eur(amt())} now?</h2>
+  <p>Once sent, it arrives within seconds and is difficult to stop or recover.</p>
+  ${s.length?note("warn","You told us",`<ul class="signs">${s.map(x=>`<li>${x}</li>`).join("")}</ul>`):""}`,
+  foot:`<button class="btn primary" data-a="hold">Send when I've viewed it instead</button><button class="btn danger" data-a="sendNow">Send now anyway</button>`})},
+r_held(){return frame({title:"Deposit set up",back:false,body:`${note("ok","Set up, not sent",`${eur(S.held.amount)} to ${esc(S.held.name)} is waiting on your home screen. Release it once you've viewed the property and the keys work.`)}
+  <p class="small">You can cancel any time before you release it. If you do nothing, it cancels automatically after 7 days.</p>`,foot:`<button class="btn primary" data-a="home">Back to home</button>`})},
+r_release(){const v=S.rel.viewed,k=S.rel.keys,bad=v==="No"||k==="No";return frame({title:"Release payment",body:`<h2>Release ${eur(S.held.amount)} to ${esc(S.held.name)}?</h2><p class="sub">Only release if both are true.</p>
+  <b>I've viewed the property in person</b>${yn("viewed",v)}<b>The keys opened the locks</b>${yn("keys",k)}
+  <div id="live">${bad?note("warn","","Keep it set up until you've seen it and the keys work."):""}</div>`,
+  foot:`<button class="btn primary" data-a="release">Release ${eur(S.held.amount)}</button><button class="btn secondary" data-a="home">Not yet</button>`})},
+r_cancel(){return frame({title:"Cancel payment",body:`<h2>Cancel this deposit?</h2><p>Nothing has been sent. The ${eur(S.held.amount)} stays in your account.</p>`,
+  foot:`<button class="btn danger" data-a="cancelHeld">Cancel payment</button><button class="btn secondary" data-a="home">Keep it set up</button>`})},
+r_cancelled(){return frame({title:"Cancelled",back:false,body:`${note("ok","Deposit cancelled",`The money stayed in your account. Nothing was sent.`)}<p class="small">Think it was a scam? Report it so the bank can help protect others.</p>`,
+  foot:`<button class="btn primary" data-a="home">Back to home</button>`})},
+r_auto(){S.held=null;save();return frame({title:"Deposit cancelled",back:false,body:`${note("ok","Nothing was sent","You didn't release it within 7 days, so it was cancelled automatically. The money stayed in your account.")}`,
+  foot:`<button class="btn primary" data-a="home">Back to home</button>`})},
+r_saved(){return frame({title:"Progress saved",back:false,body:`${note("ok","Saved",`Your deposit check is paused at ${STEPS[S.paused.step]}. Nothing has been sent.`)}<p class="small">You'll find it on your home screen when you're ready to continue.</p>`,
+  foot:`<button class="btn primary" data-a="home">Back to home</button>`})},
+
+/* ---- baseline ---- */
+b_payee(){return frame({title:"Add payee",body:`<h2>Payee details</h2>
+  <label class="f">Name on the account<input id="name" data-b="name" value="${esc(S.name)}" autocomplete="off"></label>
+  <label class="f">IBAN<input id="iban" data-b="iban" value="${esc(S.iban)}" autocomplete="off"></label><div id="live">${vop()}</div>`,
+  foot:`<button class="btn primary" data-a="bPayeeNext">Continue</button>`})},
+b_reason(){return frame({title:"Payment reason",body:`<h2>Reason for payment</h2>
+  <label class="f">Please select a reason for payment<select id="reason" data-b="reason"><option value="">Select</option>${["Rent or bills","Friends and family","Goods and services","Savings or investment","Other"].map(r=>`<option ${S.reason===r?"selected":""}>${r}</option>`).join("")}</select></label>`,
+  foot:`<button class="btn primary" data-a="bReasonNext">Continue</button>`})},
+b_warn(){return frame({title:"Be scam aware",body:note("warn","Could this be a scam?","Fraudsters may contact you pretending to be someone you trust. Check the person and the request are genuine before you pay. Once sent, payments are difficult to recover."),
+  foot:`<button class="btn primary" data-a="go" data-v="b_amount">Continue</button>`})},
+b_amount(){return frame({title:"Payment",body:`<h2>How much?</h2>
+  <label class="f">Amount<span class="euro"><input id="amount" inputmode="decimal" data-b="amount" value="${esc(S.amount)}"></span></label>
+  <label class="f">Reference<input id="ref" data-b="ref" value="${esc(S.ref)}"></label>`,foot:`<button class="btn primary" data-a="bAmountNext">Continue</button>`})},
+b_confirm(){return frame({title:"Confirm",body:`<h2>Confirm payment</h2><div class="card"><div class="row"><span>To</span><b>${esc(S.name)}</b></div><div class="row"><span>Amount</span><b>${eur(S.amount)}</b></div><div class="row"><span>Reference</span><b>${esc(S.ref)||"None"}</b></div></div>`,
+  foot:`<button class="btn primary" data-a="bSend">Pay ${eur(S.amount)}</button>`})},
+
+sent(){return frame({title:"Payment sent",back:false,body:note("ok","Payment sent",`${eur(S.sent.amount)} sent to ${esc(S.sent.name)}. It usually arrives within seconds.`),
+  foot:`<button class="btn primary" data-a="home">Back to home</button>`})}
+};
+function rentalLive(){const s=rentalSigns();const d=+S.deposit;return s.map(x=>note("warn",x[0],x[1])).join("")+(d>1000?note("info","","New payees are limited to €1,000 a day for the first 48 hours."):"");}
+
+function render(){const id=cur();const pb=document.querySelector(".proto");pb.hidden=!(id==="start"||id==="scenario");app.style.minHeight=pb.hidden?"100%":"";const m=/^r_q(\d)$/.exec(id);app.innerHTML=m?V.r_q(+m[1]):(V[id]||V.start)();}
+
+/* ---------- actions ---------- */
+function need(cond,msg){if(!cond){S.err=msg;render();return false}return true}
+function sendPayment(amount,name){S.balance=Math.round((S.balance-amount)*100)/100;S.sent={amount,name};go("sent")}
+const A = {
+  back, go:(el)=>go(el.dataset.v), home:()=>go("home",{reset:true}),
+  mode(el){const keepPaused=null;S=fresh();S.mode=el.dataset.v;go("scenario",{reset:true})},
+  reset(){S=fresh();try{localStorage.removeItem(KEY)}catch(e){}render()},
+  end(){S.stack=[];save();render()},
+  pick(el){const g=el.dataset.g,v=el.dataset.v;if(g==="payee"){S.payee=v;S.name=v==="ciara"?"Ciara O'Brien":"Electric Ireland";go("n_amount");return}S[g]=v;S.err="";render()},
+  newPayee(){S.name="";S.iban="";S.answers={};S.paused=null;S.rentalFromOther=false;S.know=null;S.purpose=null;go(S.mode==="baseline"?"b_payee":"r_purpose")},
+  payNormal(){if(need(+S.amount>0,"Enter an amount."))sendPayment(+S.amount,S.name)},
+  purposeNext(){if(need(S.purpose,"Choose what the payment is for."))go("r_payee")},
+  payeeNext(){if(!need(S.name.trim(),"Enter the name on the account."))return;if(!need(S.iban.replace(/\s/g,"").length>=15,"Enter a full IBAN."))return;
+    go(S.purpose==="deposit"?"r_rental":S.purpose==="friend"?"r_know":"r_amount")},
+  rentalNext(){if(!need(+S.rent>0,"Enter the monthly rent."))return;if(!need(+S.deposit>0,"Enter the deposit amount."))return;if(!need(S.area,"Choose the area."))return;go("r_q0")},
+  knowNext(){if(!need(S.know,"Choose an answer."))return;if(S.know==="No"){S.rentalFromOther=true;go("r_rental")}else go("r_amount")},
+  amountNext(){if(!need(+S.amount>0,"Enter an amount."))return;if(/deposit|rent|room|keys|lease/i.test(S.ref)&&S.purpose!=="friend"){go("r_isrental");return}go("r_simpleconfirm")},
+  isrentalNext(){if(!need(S.isrental,"Choose an answer."))return;if(S.isrental==="yes"){S.rentalFromOther=true;S.deposit=S.deposit||S.amount;go("r_rental")}else go("b_warn")},
+  yn(el){const k=el.dataset.k,v=el.dataset.v;if(k==="viewed"||k==="keys")S.rel[k]=v;else S.answers[k]=v;S.err="";save();render()},
+  qNext(el){const i=+el.dataset.i;if(!need(S.answers[QS[i].id],"Choose Yes or No to continue."))return;go(i<3?"r_q"+(i+1):"r_send")},
+  hold(){S.held={amount:amt(),name:S.name};S.paused=null;go("r_held",{reset:true})},
+  sendNow(){S.paused=null;sendPayment(amt(),S.name)},
+  release(){if(!need(S.rel.viewed==="Yes"&&S.rel.keys==="Yes","Only release once you've viewed it and the keys work."))return;const h=S.held;S.held=null;S.rel={};sendPayment(h.amount,h.name)},
+  cancelHeld(){S.held=null;go("r_cancelled",{reset:true})},
+  saveLater(){const id=cur();const m=/^r_q(\d)$/.exec(id);S.paused={screen:id,step:m?3+(+m[1]):2};go("r_saved",{reset:true})},
+  resume(){const p=S.paused;S.paused=null;S.stack=["home","pay","r_purpose","r_payee"];if(p.screen!=="r_rental")S.stack.push("r_rental");go(p.screen)},
+  bPayeeNext(){if(!need(S.name.trim(),"Enter the name on the account."))return;if(!need(S.iban.replace(/\s/g,"").length>=15,"Enter a full IBAN."))return;go("b_reason")},
+  bReasonNext(){if(need(S.reason,"Please select a reason for payment before continuing."))go("b_warn")},
+  bAmountNext(){if(need(+S.amount>0,"Enter an amount."))go("b_confirm")},
+  bSend(){sendPayment(+S.amount,S.name)}
+};
+V.r_simpleconfirm=()=>frame({title:"Confirm",body:`<h2>Confirm payment</h2><div class="card"><div class="row"><span>To</span><b>${esc(S.name)}</b></div><div class="row"><span>Amount</span><b>${eur(S.amount)}</b></div></div>`,foot:`<button class="btn primary" data-a="simpleSend">Pay ${eur(S.amount)}</button>`});
+A.simpleSend=()=>sendPayment(+S.amount,S.name);
+// "No, continue as normal" from the rental prompt uses the standard warning, then confirm
+const _bwarn=V.b_warn;V.b_warn=()=>_bwarn().replace('data-v="b_amount"',S.mode==="redesign"?'data-v="r_simpleconfirm"':'data-v="b_amount"');
+
+app.addEventListener("click",e=>{const el=e.target.closest("[data-a]");if(!el)return;const f=A[el.dataset.a];if(f)f(el)});
+app.addEventListener("input",e=>{const el=e.target;if(!el.dataset.b)return;S[el.dataset.b]=el.value;save();
+  const live=document.getElementById("live");if(!live)return;const id=cur();
+  if(id==="r_rental")live.innerHTML=rentalLive();else if(id==="r_payee"||id==="b_payee")live.innerHTML=vop();});
+app.addEventListener("change",e=>{const el=e.target;if(el.tagName==="SELECT"&&el.dataset.b){S[el.dataset.b]=el.value;save();if(cur()==="r_rental")document.getElementById("live").innerHTML=rentalLive()}});
+
+load();render();
+})();
+</script>
+
+</body>
+</html>
